@@ -140,11 +140,75 @@
 
 	[info removeAllObjects];
 
+	// Multiple selection
 	if (![tableListInstance tableName]) {
-		[info addObject:NSLocalizedString(@"INFORMATION", @"header for blank info pane")];
+		[info addObject:NSLocalizedString(@"MULTIPLE SELECTION", @"multiple selection")];
+		
+		int tableTypeTable = 0, tableTypeFunc = 0, tableTypeEvent = 0, tableTypeView = 0, tableTypeProc = 0, tableTypeNone = 0;
+		long long totalRowsCount = 0, totalDataLength = 0;
+		bool onlyTableTypeTableSelected = YES, isTotalRowsCountAccurate = YES;
 		
 		if ([[tableListInstance selectedTableItems] count]) {
-			[info addObject:NSLocalizedString(@"multiple selection", @"multiple selection")];
+			NSUInteger tableListIndex = 0;
+			for (NSString* tableName in [tableListInstance selectedTableNames]) {
+				
+				// Get table type
+				SPTableType currentTableType = [[[tableListInstance selectedTableTypes] objectAtIndex:tableListIndex] intValue];
+				
+				// Increment table type value
+				switch(currentTableType){
+					case SPTableTypeTable:
+						tableTypeTable++;
+
+						// If no other stuff selected
+						if(onlyTableTypeTableSelected){
+							NSMutableDictionary *currentTableStatus = [tableDataInstance statusInformationForTable:tableName andType:currentTableType];
+							totalDataLength += [[currentTableStatus objectForKey:@"Data_length"] longLongValue];
+							totalRowsCount += [[currentTableStatus objectForKey:@"Rows"] longLongValue];
+							if(![[currentTableStatus objectForKey:@"RowsCountAccurate"] boolValue]) isTotalRowsCountAccurate = NO;
+						}
+						break;
+					case SPTableTypeFunc:
+						tableTypeFunc++;
+						onlyTableTypeTableSelected = NO;
+						break;
+					case SPTableTypeEvent:
+						tableTypeEvent++;
+						onlyTableTypeTableSelected = NO;
+						break;
+					case SPTableTypeView:
+						tableTypeView++;
+						onlyTableTypeTableSelected = NO;
+						break;
+					case SPTableTypeProc:
+						tableTypeProc++;
+						onlyTableTypeTableSelected = NO;
+						break;
+					case SPTableTypeNone:
+						tableTypeNone++;
+						onlyTableTypeTableSelected = NO;
+						break;
+				}
+				
+				tableListIndex++;
+			}
+		
+		
+			// Can we display the data as a table data summary?
+			if(onlyTableTypeTableSelected){
+				[info addObject:[NSString stringWithFormat:NSLocalizedString(@"tables: %1@", @"Table Summary Section, table count"), [numberFormatter stringFromNumber:[NSNumber numberWithInt: tableTypeTable]]]];
+				[info addObject:[NSString stringWithFormat:isTotalRowsCountAccurate ? NSLocalizedString(@"total rows: %@", @"Table Summary Section : number of rows (exact value)") : NSLocalizedString(@"total rows: ~%@", @"Table Summary Section : number of rows (estimated value)"),
+								 [numberFormatter stringFromNumber:[NSNumber numberWithLongLong:totalRowsCount]]]];
+				[info addObject:[NSString stringWithFormat:NSLocalizedString(@"total size: %1@", @"Table Summary Section, size"), [NSString stringForByteSize:totalDataLength]]];
+			}
+			else{
+				if(tableTypeTable > 0) [info addObject:[NSString stringWithFormat:NSLocalizedString(@"tables: %1@", @"Table Summary Section, table count"), [numberFormatter stringFromNumber:[NSNumber numberWithInt: tableTypeTable]]]];
+				if(tableTypeView > 0) [info addObject:[NSString stringWithFormat:NSLocalizedString(@"views: %1@", @"Table Summary Section, view count"), [numberFormatter stringFromNumber:[NSNumber numberWithInt: tableTypeView]]]];
+				if(tableTypeFunc > 0) [info addObject:[NSString stringWithFormat:NSLocalizedString(@"functions: %1@", @"Table Summary Section, function count"), [numberFormatter stringFromNumber:[NSNumber numberWithInt: tableTypeFunc]]]];
+				if(tableTypeEvent > 0) [info addObject:[NSString stringWithFormat:NSLocalizedString(@"events: %1@", @"Table Summary Section, event count"), [numberFormatter stringFromNumber:[NSNumber numberWithInt: tableTypeEvent]]]];
+				if(tableTypeProc > 0) [info addObject:[NSString stringWithFormat:NSLocalizedString(@"procedures: %1@", @"Table Summary Section, procedure count"), [numberFormatter stringFromNumber:[NSNumber numberWithInt: tableTypeProc]]]];
+			}
+		
 		}
 		
 		[infoTable reloadData];
@@ -216,6 +280,7 @@
 			}
 
 		}
+
 	}
 	// Get PROC/FUNC information
 	else if ([tableListInstance tableType] == SPTableTypeProc || [tableListInstance tableType] == SPTableTypeFunc) {

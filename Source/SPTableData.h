@@ -77,6 +77,7 @@
 - (NSDictionary *) informationForTable:(NSString *)tableName;
 - (BOOL) updateInformationForCurrentView;
 - (NSDictionary *) informationForView:(NSString *)viewName;
+- (NSMutableDictionary *) statusInformationForTable:(NSString *)tableName andType:(SPTableType)tableType;
 - (BOOL) updateStatusInformationForCurrentTable;
 - (BOOL) updateTriggersForCurrentTable;
 - (BOOL) updateAccurateNumberOfRowsForCurrentTableForcingUpdate:(BOOL)alwaysUpdate;

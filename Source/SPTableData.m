@@ -964,128 +964,143 @@
 /**
  * Retrieve the status of a table as a dictionary and add it to the local cache for reuse.
  */
-- (BOOL)updateStatusInformationForCurrentTable
+- (NSMutableDictionary *) statusInformationForTable:(NSString *)tableName andType:(SPTableType)tableType
 {
 	pthread_mutex_lock(&dataProcessingLock);
-
+	
 	BOOL changeEncoding = ![[mySQLConnection encoding] isEqualToString:@"utf8"];
-
+	
 	// Catch unselected tables and return false
-	if (![tableListInstance tableName]) {
+	if (!tableName) {
 		pthread_mutex_unlock(&dataProcessingLock);
-		return NO;
+		return nil;
 	}
-
+	
 	// Ensure queries are run as UTF8
 	if (changeEncoding) {
 		[mySQLConnection storeEncodingForRestoration];
 		[mySQLConnection setEncoding:@"utf8"];
 	}
-
+	
 	// Run the status query and retrieve as a dictionary.
-	NSMutableString *escapedTableName = [NSMutableString stringWithString:[tableListInstance tableName]];
+	NSMutableString *escapedTableName = [NSMutableString stringWithString:tableName];
 	[escapedTableName replaceOccurrencesOfString:@"\\" withString:@"\\\\" options:0 range:NSMakeRange(0, [escapedTableName length])];
 	[escapedTableName replaceOccurrencesOfString:@"'" withString:@"\\\'" options:0 range:NSMakeRange(0, [escapedTableName length])];
-
+	
 	SPMySQLResult *tableStatusResult = nil;
-
-	if ([tableListInstance tableType] == SPTableTypeProc) {
+	
+	if (tableType == SPTableTypeProc) {
 		NSMutableString *escapedDatabaseName = [NSMutableString stringWithString:[tableDocumentInstance database]];
 		[escapedDatabaseName replaceOccurrencesOfString:@"'" withString:@"\\\'" options:0 range:NSMakeRange(0, [escapedDatabaseName length])];
 		tableStatusResult = [mySQLConnection queryString:[NSString stringWithFormat:@"SELECT * FROM information_schema.ROUTINES AS r WHERE r.SPECIFIC_NAME = '%@' AND r.ROUTINE_SCHEMA = '%@' AND r.ROUTINE_TYPE = 'PROCEDURE'", escapedTableName, escapedDatabaseName]];
 	}
-	else if ([tableListInstance tableType] == SPTableTypeFunc) {
+	else if (tableType == SPTableTypeFunc) {
 		NSMutableString *escapedDatabaseName = [NSMutableString stringWithString:[tableDocumentInstance database]];
 		[escapedDatabaseName replaceOccurrencesOfString:@"'" withString:@"\\\'" options:0 range:NSMakeRange(0, [escapedDatabaseName length])];
 		tableStatusResult = [mySQLConnection queryString:[NSString stringWithFormat:@"SELECT * FROM information_schema.ROUTINES AS r WHERE r.SPECIFIC_NAME = '%@' AND r.ROUTINE_SCHEMA = '%@' AND r.ROUTINE_TYPE = 'FUNCTION'", escapedTableName, escapedDatabaseName]];
 	}
-	else if ([tableListInstance tableType] == SPTableTypeView) {
+	else if (tableType == SPTableTypeView) {
 		NSMutableString *escapedDatabaseName = [NSMutableString stringWithString:[tableDocumentInstance database]];
 		[escapedDatabaseName replaceOccurrencesOfString:@"'" withString:@"\\\'" options:0 range:NSMakeRange(0, [escapedDatabaseName length])];
 		tableStatusResult = [mySQLConnection queryString:[NSString stringWithFormat:@"SELECT * FROM information_schema.VIEWS AS r WHERE r.TABLE_NAME = '%@' AND r.TABLE_SCHEMA = '%@'", escapedTableName, escapedDatabaseName]];
 	}
-	else if ([tableListInstance tableType] == SPTableTypeTable) {
+	else if (tableType == SPTableTypeTable) {
 		[escapedTableName replaceOccurrencesOfRegex:@"\\\\(?=\\Z|[^\'])" withString:@"\\\\\\\\"];
 		tableStatusResult = [mySQLConnection queryString:[NSString stringWithFormat:@"SHOW TABLE STATUS LIKE '%@'", escapedTableName ]];
 		[tableStatusResult setReturnDataAsStrings:YES];
 	}
-
+	
 	// Check for any errors, only displaying them if the connection hasn't been terminated
 	if ([mySQLConnection queryErrored]) {
 		if ([mySQLConnection isConnected]) {
 			SPOnewayAlertSheet(
-				NSLocalizedString(@"Error", @"error"),
-				[NSApp mainWindow],
-				[NSString stringWithFormat:NSLocalizedString(@"An error occured while retrieving status data.\n\nMySQL said: %@", @"message of panel when retrieving view information failed"), [mySQLConnection lastErrorMessage]]
-			);
+							   NSLocalizedString(@"Error", @"error"),
+							   [NSApp mainWindow],
+							   [NSString stringWithFormat:NSLocalizedString(@"An error occured while retrieving status data.\n\nMySQL said: %@", @"message of panel when retrieving view information failed"), [mySQLConnection lastErrorMessage]]
+							   );
 			if (changeEncoding) [mySQLConnection restoreStoredEncoding];
 		}
 		pthread_mutex_unlock(&dataProcessingLock);
-		return NO;
+		return nil;
 	}
-
+	
 	// Retrieve the status as a dictionary and set as the cache
-	[status setDictionary:[tableStatusResult getRowAsDictionary]];
-
-	if ([tableListInstance tableType] == SPTableTypeTable) {
-
+	NSMutableDictionary* statusInformation = [[NSMutableDictionary alloc] init];
+	[statusInformation setDictionary:[tableStatusResult getRowAsDictionary]];
+	
+	if (tableType == SPTableTypeTable) {
+		
 		// Reassign any "Type" key - for MySQL < 4.1 - to "Engine" for consistency.
-		if ([status objectForKey:@"Type"]) {
-			[status setObject:[status objectForKey:@"Type"] forKey:@"Engine"];
+		if ([statusInformation objectForKey:@"Type"]) {
+			[statusInformation setObject:[statusInformation objectForKey:@"Type"] forKey:@"Engine"];
 		}
-
+		
 		// If the "Engine" key is NULL, a problem occurred when retrieving the table information.
-		if ([[status objectForKey:@"Engine"] isNSNull]) {
-			[status setDictionary:[NSDictionary dictionaryWithObjectsAndKeys:@"Error", @"Engine", [NSString stringWithFormat:NSLocalizedString(@"An error occurred retrieving table information.  MySQL said: %@", @"MySQL table info retrieval error message"), [status objectForKey:@"Comment"]], @"Comment", [tableListInstance tableName], @"Name", nil]];
+		if ([[statusInformation objectForKey:@"Engine"] isNSNull]) {
+			[statusInformation setDictionary:[NSDictionary dictionaryWithObjectsAndKeys:@"Error", @"Engine", [NSString stringWithFormat:NSLocalizedString(@"An error occurred retrieving table information.  MySQL said: %@", @"MySQL table info retrieval error message"), [statusInformation objectForKey:@"Comment"]], @"Comment", tableName, @"Name", nil]];
 			if (changeEncoding) [mySQLConnection restoreStoredEncoding];
 			pthread_mutex_unlock(&dataProcessingLock);
-			return NO;
+			return nil;
 		}
-
+		
 		// Add a note for whether the row count is accurate or not - only for MyISAM
-		if ([[status objectForKey:@"Engine"] isEqualToString:@"MyISAM"]) {
-			[status setObject:@"y" forKey:@"RowsCountAccurate"];
+		if ([[statusInformation objectForKey:@"Engine"] isEqualToString:@"MyISAM"]) {
+			[statusInformation setObject:@"y" forKey:@"RowsCountAccurate"];
 		} else {
-			[status setObject:@"n" forKey:@"RowsCountAccurate"];
+			[statusInformation setObject:@"n" forKey:@"RowsCountAccurate"];
 		}
-
-		// [status objectForKey:@"Rows"] is NULL then try to get the number of rows via SELECT COUNT(1) FROM `foo`
+		
+		// [statusInformation objectForKey:@"Rows"] is NULL then try to get the number of rows via SELECT COUNT(1) FROM `foo`
 		// this happens e.g. for db "information_schema"
-		if([[status objectForKey:@"Rows"] isNSNull]) {
+		if([[statusInformation objectForKey:@"Rows"] isNSNull]) {
 			tableStatusResult = [mySQLConnection queryString:[NSString stringWithFormat:@"SELECT COUNT(1) FROM %@", [escapedTableName backtickQuotedString] ]];
 			// this query can fail e.g. if a table is damaged
 			if (tableStatusResult && ![mySQLConnection queryErrored]) {
-				[status setObject:[[tableStatusResult getRowAsArray] objectAtIndex:0] forKey:@"Rows"];
-				[status setObject:@"y" forKey:@"RowsCountAccurate"];
+				[statusInformation setObject:[[tableStatusResult getRowAsArray] objectAtIndex:0] forKey:@"Rows"];
+				[statusInformation setObject:@"y" forKey:@"RowsCountAccurate"];
 			}
 			else {
 				//FIXME that error should really show only when trying to view the table content, but we don't even try to load that if Rows==NULL
 				SPOnewayAlertSheet(
-					NSLocalizedString(@"Querying row count failed", @"table status : row count query failed : error title"),
-					[NSApp mainWindow],
-					[NSString stringWithFormat:NSLocalizedString(@"An error occured while trying to determine the number of rows for “%@”.\nMySQL said: %@ (%lu)", @"table status : row count query failed : error message"),[tableListInstance tableName],[mySQLConnection lastErrorMessage],[mySQLConnection lastErrorID]]
-				);
+								   NSLocalizedString(@"Querying row count failed", @"table status : row count query failed : error title"),
+								   [NSApp mainWindow],
+								   [NSString stringWithFormat:NSLocalizedString(@"An error occured while trying to determine the number of rows for “%@”.\nMySQL said: %@ (%lu)", @"table status : row count query failed : error message"),tableName,[mySQLConnection lastErrorMessage],[mySQLConnection lastErrorID]]
+								   );
 			}
 		}
-
+		
 	}
-
+	
 	// When views are selected, populate the table by adding some default information.
-	else if ([tableListInstance tableType] == SPTableTypeView) {
-		[status addEntriesFromDictionary:[NSDictionary dictionaryWithObjectsAndKeys:
-			@"View", @"Engine",
-			@"No status information is available for views.", @"Comment",
-			[tableListInstance tableName], @"Name",
-			[status objectForKey:@"COLLATION_CONNECTION"], @"Collation",
-			[status objectForKey:@"CHARACTER_SET_CLIENT"], @"CharacterSetClient",
-			nil]];
+	else if (tableType == SPTableTypeView) {
+		[statusInformation addEntriesFromDictionary:[NSDictionary dictionaryWithObjectsAndKeys:
+										  @"View", @"Engine",
+										  @"No status information is available for views.", @"Comment",
+										  tableName, @"Name",
+										  [statusInformation objectForKey:@"COLLATION_CONNECTION"], @"Collation",
+										  [statusInformation objectForKey:@"CHARACTER_SET_CLIENT"], @"CharacterSetClient",
+										  nil]];
 	}
-
+	
 	if (changeEncoding) [mySQLConnection restoreStoredEncoding];
-
+	
 	pthread_mutex_unlock(&dataProcessingLock);
+	
+	return statusInformation;
+}
 
-	return YES;
+/**
+ * Retrieve the status of the current table as a dictionary and add it to the local cache for reuse.
+ */
+- (BOOL)updateStatusInformationForCurrentTable
+{
+	NSMutableDictionary* statusInformation = [self statusInformationForTable:[tableListInstance tableName] andType:[tableListInstance tableType]];
+	
+	if (statusInformation == nil) return NO;
+	else{
+		status = statusInformation;
+		return YES;
+	}
 }
 
 /**
