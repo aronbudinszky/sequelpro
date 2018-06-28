@@ -141,7 +141,7 @@ static NSString *SPSchemaPrivilegesTabIdentifier = @"Schema Privileges";
 
 	[self _initializeSchemaPrivs];
 	[self _initializeUsers];
-	[self _initializeAvailablePrivs];	
+	[self _initializeAvailablePrivs];
 
 	treeSortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"displayName" ascending:YES];
 	

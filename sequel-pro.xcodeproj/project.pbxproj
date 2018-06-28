@@ -395,6 +395,7 @@
 		9BE765EBBDFD2F121C13D274 /* SPFillView.m in Sources */ = {isa = PBXBuildFile; fileRef = 9BE768F3989033CEDDC2027E /* SPFillView.m */; };
 		9BE76F2886901784E4FD2321 /* SPFilterTableController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9BE76A3D5C9830E2F7738770 /* SPFilterTableController.m */; };
 		9BE76F2B943AFDBA6EDC52BE /* SPHelpViewerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9BE760B3C4586EA3B1A48600 /* SPHelpViewerController.m */; };
+		9C61E5AD20E523E600EB846E /* LegacyPasswordTransformer.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C61E5AC20E523E600EB846E /* LegacyPasswordTransformer.m */; };
 		B51D6B9E114C310C0074704E /* toolbar-switch-to-table-triggers.png in Resources */ = {isa = PBXBuildFile; fileRef = B51D6B9D114C310C0074704E /* toolbar-switch-to-table-triggers.png */; };
 		B52460D70F8EF92300171639 /* SPArrayAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = B52460D40F8EF92300171639 /* SPArrayAdditions.m */; };
 		B52460D80F8EF92300171639 /* SPTextViewAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = B52460D60F8EF92300171639 /* SPTextViewAdditions.m */; };
@@ -776,7 +777,7 @@
 		17DD52B6115071D0007D8950 /* SPPrintTemplate.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = SPPrintTemplate.html; path = Templates/SPPrintTemplate.html; sourceTree = "<group>"; };
 		17DD52B811507217007D8950 /* English */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = English; path = English.lproj/Credits.rtf; sourceTree = "<group>"; };
 		17DD52C2115074B3007D8950 /* English */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		17DD52C5115074CB007D8950 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/Localizable.strings; sourceTree = "<group>"; };
+		17DD52C5115074CB007D8950 /* English */ = {isa = PBXFileReference; fileEncoding = 2483028224; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/Localizable.strings; sourceTree = "<group>"; };
 		17E0937D114AE154007FC1B4 /* SPTableInfoPrintTemplate.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = SPTableInfoPrintTemplate.html; path = Templates/SPTableInfoPrintTemplate.html; sourceTree = "<group>"; };
 		17E5954E14F304000054EE08 /* QueryKit.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = QueryKit.xcodeproj; path = Frameworks/QueryKit/QueryKit.xcodeproj; sourceTree = "<group>"; };
 		17E641440EF01EB5001BC333 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -1145,6 +1146,8 @@
 		9BE76C6E8377959C794385E5 /* SPHelpViewerController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SPHelpViewerController.h; sourceTree = "<group>"; };
 		9BE76CC0CCE3A4A74E3E8D5E /* SPFillView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SPFillView.h; sourceTree = "<group>"; };
 		9BE76F9BF9BDA2921CDD05AF /* SPFilterTableController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SPFilterTableController.h; sourceTree = "<group>"; };
+		9C61E5AB20E523E600EB846E /* LegacyPasswordTransformer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LegacyPasswordTransformer.h; sourceTree = "<group>"; };
+		9C61E5AC20E523E600EB846E /* LegacyPasswordTransformer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LegacyPasswordTransformer.m; sourceTree = "<group>"; };
 		B51D6B9D114C310C0074704E /* toolbar-switch-to-table-triggers.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "toolbar-switch-to-table-triggers.png"; sourceTree = "<group>"; };
 		B52460D30F8EF92300171639 /* SPArrayAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SPArrayAdditions.h; sourceTree = "<group>"; };
 		B52460D40F8EF92300171639 /* SPArrayAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SPArrayAdditions.m; sourceTree = "<group>"; };
@@ -2015,6 +2018,7 @@
 				583CE39511722B70008F148E /* File Compression */,
 				173284E51088FEC20062E892 /* Data */,
 				17E6416F0EF01F4C001BC333 /* Keychain */,
+				9C61E5A820E523AF00EB846E /* Transformers */,
 				58FEF15E0F23D60A00518E8E /* Parsing */,
 				17E641720EF01F6B001BC333 /* SSH Tunnel */,
 				B57747D60F7A8990003B34F9 /* Category Additions */,
@@ -2541,6 +2545,15 @@
 				73F70A951E4E547500636550 /* SPJSONFormatter.m */,
 			);
 			name = Parsing;
+			sourceTree = "<group>";
+		};
+		9C61E5A820E523AF00EB846E /* Transformers */ = {
+			isa = PBXGroup;
+			children = (
+				9C61E5AB20E523E600EB846E /* LegacyPasswordTransformer.h */,
+				9C61E5AC20E523E600EB846E /* LegacyPasswordTransformer.m */,
+			);
+			name = Transformers;
 			sourceTree = "<group>";
 		};
 		B57747D60F7A8990003B34F9 /* Category Additions */ = {
@@ -3184,6 +3197,7 @@
 				B57747D40F7A8974003B34F9 /* SPPreferenceController.m in Sources */,
 				B57747D90F7A8990003B34F9 /* SPWindowAdditions.m in Sources */,
 				B57747DC0F7A89D0003B34F9 /* SPFavoriteTextFieldCell.m in Sources */,
+				9C61E5AD20E523E600EB846E /* LegacyPasswordTransformer.m in Sources */,
 				B52460D70F8EF92300171639 /* SPArrayAdditions.m in Sources */,
 				B52460D80F8EF92300171639 /* SPTextViewAdditions.m in Sources */,
 				296DC8B60F909194002A3258 /* MGTemplateEngine.m in Sources */,

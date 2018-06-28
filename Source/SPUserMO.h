@@ -30,7 +30,9 @@
 
 #import <CoreData/CoreData.h>
 
-@interface SPUserMO : NSManagedObject
+@interface SPUserMO : NSManagedObject {
+    NSString *currentPlugin;
+}
 
 @property (nonatomic, retain) NSString *user;
 @property (nonatomic, retain) NSString *host;
@@ -39,6 +41,9 @@
 
 - (NSString *)displayName;
 - (void)setDisplayName:(NSString *)value;
+
+- (BOOL)legacyPassword;
+- (void)setLegacyPassword:(BOOL)value;
 
 // Access to-many relationship via -[NSObject mutableSetValueForKey:]
 - (void)addChildrenObject:(SPUserMO *)value;

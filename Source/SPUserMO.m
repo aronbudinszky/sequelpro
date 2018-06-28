@@ -35,6 +35,10 @@ static NSString *SPUserMOParentKey   = @"parent";
 static NSString *SPUserMOUserKey     = @"user";
 static NSString *SPUserMOHostKey     = @"host";
 static NSString *SPUserMOChildrenKey = @"children";
+static NSString *SPUserMOPluginKey   = @"plugin";
+
+static NSString *SPUserMOPluginLegacy  = @"mysql_native_password";
+static NSString *SPUserMOPluginSecure  = @"caching_sha2_password";
 
 @implementation SPUserMO
 
@@ -63,6 +67,31 @@ static NSString *SPUserMOChildrenKey = @"children";
     {
 		[self setValue:(value == nil) ? @"%" : value forKey:SPUserMOHostKey];
     }
+}
+
+- (BOOL)legacyPassword
+{
+	currentPlugin = [self valueForKey:SPUserMOPluginKey];
+	return [currentPlugin isEqualToString:SPUserMOPluginLegacy];
+}
+
+- (void)setLegacyPassword:(BOOL)value
+{
+	return;
+	// Problem: if we temporarily set to legacy plugin then we lose the original currentPlugin value
+
+	// When setting to secure encryption (non-legacy) we need to make sure we use the current value (might be custom plugin)
+	if(!value){
+		// If the current is legacy, then set to current to secure
+		if([currentPlugin isEqualToString:SPUserMOPluginLegacy]){
+			currentPlugin = SPUserMOPluginSecure;
+			[self setValue:currentPlugin forKey:SPUserMOPluginKey];
+		}
+		[self setValue:currentPlugin forKey:SPUserMOPluginKey];
+	}
+	else{
+		[self setValue:SPUserMOPluginLegacy forKey:SPUserMOPluginKey];
+	}
 }
 
 - (void)addChildrenObject:(SPUserMO *)value
